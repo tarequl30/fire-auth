@@ -1,24 +1,29 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFacebook } from '@fortawesome/free-brands-svg-icons'
-import './App.css';
+import './App.css'
 import firebaseConfig from './firebase.config'
 import firebase from "firebase/app";
 import "firebase/auth";
 import { useState } from 'react';
 
-firebase.initializeApp(firebaseConfig);
+// firebase.initializeApp(firebaseConfig);
 
-
+if(firebase.apps.length === 0){
+  firebase.initializeApp(firebaseConfig)
+}
 function App() {
+  const [newUser, setNewUser] = useState(false)
   const [user , setUser] = useState({
     signedIn: false,
     name:'',
     email:'',
-    photo:''
+    password :'',
+    photo:'',
+   
   })
   var provider = new firebase.auth.GoogleAuthProvider();
-  
+  const fbProvider = new firebase.auth.FacebookAuthProvider();
   const handleClick = () => {
     firebase.auth()
     .signInWithPopup(provider)
@@ -50,114 +55,162 @@ function App() {
       var credential = error.credential;
       // ...
     });
- 
 }
+const handleFbSignIn = () => {
+  firebase
+  .auth()
+  .signInWithPopup(fbProvider)
+  .then((result) => {
+    /** @type {firebase.auth.OAuthCredential} */
+    var credential = result.credential;
 
+    // The signed-in user info.
+    var user = result.user;
+    console.log('sign in' ,user)
+    // This gives you a Facebook Access Token. You can use it to access the Facebook API.
+    var accessToken = credential.accessToken;
+
+    // ...
+  })
+  .catch((error) => {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    // The email of the user's account used.
+    var email = error.email;
+    // The firebase.auth.AuthCredential type that was used.
+    var credential = error.credential;
+
+    // ...
+  });
+}
 const handleSignOut = () => {
   firebase.auth().signOut().then( res => {
     const signOutUser = {
       signedIn: false,
       name:'',
       email:'',
-      photo:''
+      photo:'',
+      error: '',
+      success : false
     };
     setUser(signOutUser)
     });
   }
-    const handleChange = (event) => {
-      console.log(event.target.value)
+  const handleChange = (event) => {
+     let isFormValid = true;
+      if(event.target.name === 'email') {
+      isFormValid = /\S+@\S+\.\S+/.test(event.target.value)
+      }
+      if(event.target.name === 'password') {
+        const checkLength = event.target.value.length > 6;
+        const validPass = /\d{1}/.test(event.target.value)
+        isFormValid = checkLength && validPass;
+      }
+      if(isFormValid){
+           const newUserInfo = {...user}
+           newUserInfo[event.target.name] = event.target.value;
+           setUser(newUserInfo);
+      }
     }
-    
-    // const signUpButton = document.getElementById('signUp');
-    // const signInButton = document.getElementById('signIn');
-    // const container = document.getElementById('container');
-    
-    // signUpButton.addEventListener('click', () => {
-    //   container.classList.add("right-panel-active");
-    // });
-    
-    // signInButton.addEventListener('click', () => {
-    //   container.classList.remove("right-panel-active");
-    // });
-  return (
-    <>
-    <div>
-       {/* {
-         user.signedIn ? <button onClick={handleSignOut}>sign out</button> :
-         <button className="form" onClick={handleClick}>sign in</button>
-         }
+  const handleSubmit = (event) => {
+    // console.log(user.email, user.password)
+    if(newUser && user.email && user.password){
+      firebase.auth()
+      .createUserWithEmailAndPassword(user.email, user.password)
+     .then((res) => {
+       const newUserInfo = {...user}
+       newUserInfo.error = '';
+       newUserInfo.success = true;
+       setUser(newUserInfo)
+       updateUserInfo(user.name)
+    //  console.log(res)
+  })
+  .catch((error) => {
+    const newUserInfo = {...user}
+    newUserInfo.error = error.message;
+    newUserInfo.success = false;
+    // var errorCode = error.code;
+    // var errorMessage = error.message;
+    setUser(newUserInfo)
+    // console.log(errorCode, errorMessage);
+    // ..
+  });
+  //  console.log('sub')
+    }
+
+    if(!newUser && user.email && user.password){
+      firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+      .then((res) => {
+        // Signed in
+        const newUserInfo = {...user}
+        newUserInfo.error = '';
+        newUserInfo.success = true;
+        setUser(newUserInfo)
+        console.log("sign in user ", res.user)
+      })
+      .catch((error) => {
+        const newUserInfo = {...user}
+    newUserInfo.error = error.message;
+    newUserInfo.success = false;
+    setUser(newUserInfo)
+      });
+    }
+    event.preventDefault();
+  }
+const updateUserInfo = name => {
+  var user = firebase.auth().currentUser;
+
+      user.updateProfile({
+        displayName: name
+      }).then(function() {
+        console.log("updated")
+      }).catch(function(error) {
+        console.log(error)
+      });
+      }
+return (
+<>
+  <div class="container">
+    <div class="form-container sign-in-container">
+	    <form >
+        <h2>{newUser ? 'Sign Up' : 'Log In'}</h2>
+            <input type="checkbox" onChange={() => setNewUser(!newUser)} name="" id=""/> <label htmlFor="newUser">New User Sign Up</label>
+           {newUser && <input type="text" name='name' onBlur={handleChange} placeholder="name"/>}
+            <br/>
+            <input type="text" placeholder="Email" name='email' onBlur={handleChange} required/>
+            <br/>
+            <input type="password" placeholder="Password" name="password" onBlur={handleChange} required />
+            <br/>
+            <input onClick={handleSubmit} className="signInBtn" type="Submit" value={newUser ? "Sign Up" : "Log In"} />
+            <p>{user.error}</p>
+            {
+              user.success && <p style={{color:"green"}}>user {newUser ? 'Created' : "logged In"} Successfuly</p> 
+            }
+	    </form>
+    </div>
+<div class="overlay-container">
+	<div class="overlay">
+		<div class="overlay-panel overlay-right">
+			<h1>Hello, Friend!</h1>
+			<p>Simply Click on Sign in with Google button to Login</p>
       {
-        user.signedIn && <div><p>welcome {user.name}</p>
-        <p>Your Email: {user.email}</p> 
-        <img src={user.photo} alt="" width="50%"/>
-        </div> 
-      } */}
-      <form >
-      <div class="container" id="container">
-      	<div class="form-container sign-up-container">
-	    	<form action="#">
-			<h1>Create Account</h1>
-			<div class="social-container">
-      <FontAwesomeIcon icon={['fab', 'apple']} />
-    <FontAwesomeIcon icon={['fab', 'microsoft']} />
-    <FontAwesomeIcon icon={['fab', 'google']} />
-			</div>
-			<span>or use your email for registration</span>
-			<input type="text" placeholder="Name" />
-			<input type="email" placeholder="Email" />
-			<input type="password" placeholder="Password" />
-			<button>Sign Up</button>
-		</form>
-	</div>
-	<div class="form-container sign-in-container">
-		<form action="#">
-			<h1>Sign Up</h1>
-			<div class="social-container">
-      <FontAwesomeIcon icon={['faFacebook', 'facebook']} />
-    <FontAwesomeIcon icon={['fab', 'microsoft']} />
-    <FontAwesomeIcon icon={['fab', 'google']} />
-			</div>
-			<span>use your account</span>
-      <input type="text" placeholder="Your Email " onChange={handleChange} required/>
-         <br/>
-         <input type="password" name="" placeholder="Password"  required/>
-         <br/>
-         <input className="signInBtn" type="submit" value="submit"/>
-		</form>
-	</div>
-	<div class="overlay-container">
-		<div class="overlay">
-			<div class="overlay-panel overlay-left">
-				<h1>Welcome Back!</h1>
-				<p>To keep connected with us please login with your personal info</p>
-				<button class="ghost" id="signIn">Sign In</button>
-			</div>
-			<div class="overlay-panel overlay-right">
-				<h1>Hello, Friend!</h1>
-				<p>Enter your personal details and start journey with us</p>
-        {
          user.signedIn ? <button onClick={handleSignOut}>sign out</button> :
          <button onClick={handleClick}>sign in with Google</button>
          }
+         <br/>
+         <button onClick={handleFbSignIn}>Sign In with facebook</button>
       {
         user.signedIn && <div><p>welcome {user.name}</p>
         <p>Your Email: {user.email}</p> 
         <img src={user.photo} alt="" width="50%"/>
         </div> 
       }
-			</div>
 		</div>
 	</div>
 </div>
-
-        {/* <input type="text" placeholder="ur email" onChange={handleChange} required/>
-         <br/>
-         <input type="password" name="" placeholder="password"  required/>
-         <br/>
-         <input className="form" type="submit" value="submit"/> */}
-      </form>
-    </div>
-   </>
+</div>
+</>
   );
 }
 
