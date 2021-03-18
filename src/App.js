@@ -7,8 +7,6 @@ import firebase from "firebase/app";
 import "firebase/auth";
 import { useState } from 'react';
 
-// firebase.initializeApp(firebaseConfig);
-
 if(firebase.apps.length === 0){
   firebase.initializeApp(firebaseConfig)
 }
@@ -20,7 +18,6 @@ function App() {
     email:'',
     password :'',
     photo:'',
-   
   })
   var provider = new firebase.auth.GoogleAuthProvider();
   const fbProvider = new firebase.auth.FacebookAuthProvider();
@@ -37,23 +34,14 @@ function App() {
       }
       setUser(signedInUser);
        console.log(displayName, photoURL, email)
-      /** @type {firebase.auth.OAuthCredential} */
       var credential = result.credential;
-  
-      // This gives you a Google Access Token. You can use it to access the Google API.
       var token = credential.accessToken;
-      // The signed-in user info.
       var user = result.user;
-      // ...
     }).catch((error) => {
-      // Handle Errors here.
       var errorCode = error.code;
       var errorMessage = error.message;
-      // The email of the user's account used.
       var email = error.email;
-      // The firebase.auth.AuthCredential type that was used.
       var credential = error.credential;
-      // ...
     });
 }
 const handleFbSignIn = () => {
@@ -61,27 +49,16 @@ const handleFbSignIn = () => {
   .auth()
   .signInWithPopup(fbProvider)
   .then((result) => {
-    /** @type {firebase.auth.OAuthCredential} */
     var credential = result.credential;
-
-    // The signed-in user info.
     var user = result.user;
-    console.log('sign in' ,user)
-    // This gives you a Facebook Access Token. You can use it to access the Facebook API.
+    console.log('sign in' ,user) 
     var accessToken = credential.accessToken;
-
-    // ...
   })
   .catch((error) => {
-    // Handle Errors here.
     var errorCode = error.code;
     var errorMessage = error.message;
-    // The email of the user's account used.
     var email = error.email;
-    // The firebase.auth.AuthCredential type that was used.
     var credential = error.credential;
-
-    // ...
   });
 }
 const handleSignOut = () => {
@@ -114,7 +91,6 @@ const handleSignOut = () => {
       }
     }
   const handleSubmit = (event) => {
-    // console.log(user.email, user.password)
     if(newUser && user.email && user.password){
       firebase.auth()
       .createUserWithEmailAndPassword(user.email, user.password)
@@ -124,25 +100,17 @@ const handleSignOut = () => {
        newUserInfo.success = true;
        setUser(newUserInfo)
        updateUserInfo(user.name)
-    //  console.log(res)
   })
   .catch((error) => {
     const newUserInfo = {...user}
     newUserInfo.error = error.message;
     newUserInfo.success = false;
-    // var errorCode = error.code;
-    // var errorMessage = error.message;
     setUser(newUserInfo)
-    // console.log(errorCode, errorMessage);
-    // ..
   });
-  //  console.log('sub')
     }
-
     if(!newUser && user.email && user.password){
       firebase.auth().signInWithEmailAndPassword(user.email, user.password)
       .then((res) => {
-        // Signed in
         const newUserInfo = {...user}
         newUserInfo.error = '';
         newUserInfo.success = true;
