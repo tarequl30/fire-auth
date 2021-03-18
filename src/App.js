@@ -175,7 +175,7 @@ return (
     <div class="form-container sign-in-container">
 	    <form >
         <h2>{newUser ? 'Sign Up' : 'Log In'}</h2>
-            <input type="checkbox" onChange={() => setNewUser(!newUser)} name="" id=""/> <label htmlFor="newUser">New User Sign Up</label>
+            <input type="checkbox" onChange={() => setNewUser(!newUser)} name="" id=""/> <label htmlFor="newUser">Click checkbox for Sign Up</label>
            {newUser && <input type="text" name='name' onBlur={handleChange} placeholder="name"/>}
             <br/>
             <input type="text" placeholder="Email" name='email' onBlur={handleChange} required/>
